@@ -112,7 +112,7 @@ def GNN_embed(adj,dim,fixed):
             if loss < best_loss:
                 best_loss = loss
 
-        if epoch % 100 == 0:
+        if epoch % 5000 == 0:
             print('Epoch: {:04d}'.format(epoch + 1),
                   'loss: {:.8f}'.format(best_loss.item()),
                   'time: {:.4f}s'.format(time.time() - t))

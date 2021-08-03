@@ -1,10 +1,10 @@
-import time
 import argparse
 import numpy as np
 
 import torch
 
-from utils import load_data,normalize,toy_data,norm_embed,nmi_score,svdApprox
+from utils import load_data
+from GNN import GNN_embed
 
 torch.set_printoptions(sci_mode=False)
 
