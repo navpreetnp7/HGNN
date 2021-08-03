@@ -108,9 +108,15 @@ def GNN_embed(adj,dim,fixed):
 
         if epoch == 0:
             best_loss = loss
+            best_lr = lr
+            if fixed:
+                best_sig = sig
         else:
             if loss < best_loss:
                 best_loss = loss
+                best_lr = lr
+                if fixed:
+                    best_sig = sig
 
         if epoch % 5000 == 0:
             print('Epoch: {:04d}'.format(epoch + 1),
@@ -119,3 +125,5 @@ def GNN_embed(adj,dim,fixed):
 
     print("Optimization Finished!")
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
+
+    return best_lr
