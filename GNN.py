@@ -30,7 +30,7 @@ parser.add_argument('--ndim', type=int, default=2,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-def GNN_embed(adj,dim,fixed):
+def GraphNeuralNet(adj,dim,fixed,features,sig_fix=None):
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -50,17 +50,6 @@ def GNN_embed(adj,dim,fixed):
     sigma0 = adj.std() * torch.ones(adj.shape[1:])
     with torch.no_grad():
         loss0 = criterion(torch.flatten(adj), torch.flatten(mu0), torch.flatten(torch.square(sigma0)))
-
-    #svd features
-    svd_mu,svd_sig,svd_loss,svdembedx,svdembedy = svdApprox(adj=adj,dim=args.ndim)
-    features = torch.cat((svdembedx,svdembedy),dim=1)
-    if not fixed:
-        mse = torch.nn.MSELoss()
-        mseloss = mse(torch.flatten(svd_mu),torch.flatten(adj))
-        sig = torch.sqrt(mseloss)/args.ndim
-        ones = torch.ones(features.size())*torch.sqrt(sig)
-        features = torch.cat((features,ones),dim=1)
-    features = features.unsqueeze(dim=0)
 
     # Model and optimizer
 
@@ -126,4 +115,28 @@ def GNN_embed(adj,dim,fixed):
     print("Optimization Finished!")
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
-    return best_lr
+    if fixed:
+        return best_lr, best_sig
+    else:
+        return best_lr
+
+def GNN_embed(adj,dim,features=None):
+
+    if features == None:
+        # svd features
+        svd_mu, svd_sig, svd_loss, svdembedx, svdembedy = svdApprox(adj=adj, dim=dim)
+        features = torch.cat((svdembedx, svdembedy), dim=1)
+        features = features.unsqueeze(dim=0)
+        print("Fixed Sigma dim {}".format(dim))
+        mu, loss, loss0, lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features)
+
+        sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
+        features = torch.cat((lr[0].detach(), sig_flex), dim=1)
+        features = features.unsqueeze(dim=0)
+        print("Flexible Sigma dim {}".format(dim))
+        mu, loss, loss0, lr = GraphNeuralNet(adj=adj,dim=dim,new=True,features=features,sig_fix=sigma)
+    else:
+        print("Flexible Sigma dim {}".format(dim))
+        mu, loss, loss0, lr = GraphNeuralNet(adj=adj,dim=dim,features=features)
+
+    return lr
