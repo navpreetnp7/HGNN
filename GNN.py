@@ -122,7 +122,7 @@ def GraphNeuralNet(adj,dim,fixed,features):
 
 def GNN_embed(adj,dim,features=None):
 
-    if features == None:
+    if type(features) == type(None):
         # svd features
         svd_mu, svd_sig, svd_loss, svdembedx, svdembedy = svdApprox(adj=adj, dim=dim)
         features = torch.cat((svdembedx, svdembedy), dim=1)
@@ -130,11 +130,11 @@ def GNN_embed(adj,dim,features=None):
         print("Fixed Sigma dim {}".format(dim))
         lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features)
 
-        sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
-        features = torch.cat((lr[0].detach(), sig_flex), dim=1)
-        features = features.unsqueeze(dim=0)
-        print("Flexible Sigma dim {}".format(dim))
-        lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
+        #sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
+        #features = torch.cat((lr[0].detach(), sig_flex), dim=1)
+        #features = features.unsqueeze(dim=0)
+        #print("Flexible Sigma dim {}".format(dim))
+        #lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
     else:
         print("Flexible Sigma dim {}".format(dim))
         lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)

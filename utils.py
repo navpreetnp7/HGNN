@@ -87,4 +87,4 @@ def svdApprox(adj, dim, relu=False):
     sigma = sig * torch.ones(adj.shape)
     loss = criterion(torch.flatten(adj), torch.flatten(mu), torch.flatten(torch.square(sigma)))
 
-    return mu, sigma, loss.item(), embedx, embedy
+    return mu, sig, loss.item(), embedx, embedy
