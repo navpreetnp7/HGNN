@@ -30,7 +30,7 @@ parser.add_argument('--ndim', type=int, default=2,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-def GraphNeuralNet(adj,dim,fixed,features,sig_fix=None):
+def GraphNeuralNet(adj,dim,fixed,features):
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -134,9 +134,9 @@ def GNN_embed(adj,dim,features=None):
         features = torch.cat((lr[0].detach(), sig_flex), dim=1)
         features = features.unsqueeze(dim=0)
         print("Flexible Sigma dim {}".format(dim))
-        lr = GraphNeuralNet(adj=adj,dim=dim,new=True,features=features,sig_fix=sigma)
+        lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
     else:
         print("Flexible Sigma dim {}".format(dim))
-        lr = GraphNeuralNet(adj=adj,dim=dim,features=features)
+        lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
 
     return lr
