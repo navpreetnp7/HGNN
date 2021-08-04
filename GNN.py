@@ -54,9 +54,9 @@ def GraphNeuralNet(adj,dim,fixed,features,sig_fix=None):
     # Model and optimizer
 
     model = GNN(batch_size=adj.shape[0],
-                nfeat=adj.shape[1],
+                nfeat=features.shape[1],
                 nhid=adj.shape[1],
-                ndim=args.ndim,
+                ndim=features.shape[2],
                 mu0=adj.mean(),
                 sigma0=adj.std(),
                 fixed=fixed)
@@ -128,15 +128,15 @@ def GNN_embed(adj,dim,features=None):
         features = torch.cat((svdembedx, svdembedy), dim=1)
         features = features.unsqueeze(dim=0)
         print("Fixed Sigma dim {}".format(dim))
-        mu, loss, loss0, lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features)
+        lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features)
 
         sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
         features = torch.cat((lr[0].detach(), sig_flex), dim=1)
         features = features.unsqueeze(dim=0)
         print("Flexible Sigma dim {}".format(dim))
-        mu, loss, loss0, lr = GraphNeuralNet(adj=adj,dim=dim,new=True,features=features,sig_fix=sigma)
+        lr = GraphNeuralNet(adj=adj,dim=dim,new=True,features=features,sig_fix=sigma)
     else:
         print("Flexible Sigma dim {}".format(dim))
-        mu, loss, loss0, lr = GraphNeuralNet(adj=adj,dim=dim,features=features)
+        lr = GraphNeuralNet(adj=adj,dim=dim,features=features)
 
     return lr

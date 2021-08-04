@@ -12,12 +12,8 @@ class GNN(nn.Module):
 
         self.gc1 = GraphConvolution(batch_size, nfeat, nhid, mu0, sigma0, scale=False)
         self.fixed = fixed
-        if self.fixed:
-            self.embeddings = GraphConvolution(batch_size, nhid, 2 * ndim, mu0, sigma0, scale=True)
-            self.reconstructions = InnerProduct(2 * ndim)
-        else:
-            self.embeddings = GraphConvolution(batch_size, nhid, 4 * ndim, mu0, sigma0, scale=True)
-            self.reconstructions = InnerProduct(4 * ndim)
+        self.embeddings = GraphConvolution(batch_size, nhid, ndim, mu0, sigma0, scale=True)
+        self.reconstructions = InnerProduct(ndim)
 
     def forward(self, x, adj):
         x = self.gc1(x, adj)
