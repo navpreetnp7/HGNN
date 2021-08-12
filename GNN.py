@@ -30,8 +30,8 @@ parser.add_argument('--ndim', type=int, default=2,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-def GraphNeuralNet(adj,dim,fixed,features,agg=False):
 
+def GraphNeuralNet(adj, dim, fixed, features, agg):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     if args.cuda:
@@ -57,6 +57,7 @@ def GraphNeuralNet(adj,dim,fixed,features,agg=False):
                 nfeat=features.shape[1],
                 nhid=adj.shape[1],
                 ndim=features.shape[2],
+                fixed=fixed,
                 agg=agg)
 
     if args.cuda:
@@ -71,7 +72,6 @@ def GraphNeuralNet(adj,dim,fixed,features,agg=False):
     optimizer = optim.Adam(model.parameters(),
                            lr=args.lr, weight_decay=args.weight_decay)
 
-
     for epoch in range(args.epochs):
 
         t = time.time()
@@ -79,14 +79,14 @@ def GraphNeuralNet(adj,dim,fixed,features,agg=False):
         optimizer.zero_grad()
 
         if fixed:
-            mu,lr = model(features, adj_norm)
+            mu, lr = model(features, adj_norm)
             with torch.no_grad():
                 mse = torch.nn.MSELoss()
                 mseloss = mse(torch.flatten(mu), torch.flatten(adj))
                 sig = torch.sqrt(mseloss)
             sigma = sig * torch.ones(adj.shape, requires_grad=True)
         else:
-            mu, sigma,lr = model(features, adj_norm)
+            mu, sigma, lr = model(features, adj_norm)
 
         loss = criterion(torch.flatten(adj), torch.flatten(mu), torch.flatten(torch.square(sigma)))
         loss.backward()
@@ -118,23 +118,23 @@ def GraphNeuralNet(adj,dim,fixed,features,agg=False):
     else:
         return best_lr
 
-def GNN_embed(adj,dim,features=None):
 
+def GNN_embed(adj, dim, features=None, agg=False):
+    print("Fixed Sigma dim {}".format(dim))
     if type(features) == type(None):
         # svd features
         svd_mu, svd_sig, svd_loss, svdembedx, svdembedy = svdApprox(adj=adj, dim=dim)
         features = torch.cat((svdembedx, svdembedy), dim=1)
         features = features.unsqueeze(dim=0)
-        print("Fixed Sigma dim {}".format(dim))
-        lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features)
+        lr, sigma = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features, agg=agg)
 
-        #sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
-        #features = torch.cat((lr[0].detach(), sig_flex), dim=1)
-        #features = features.unsqueeze(dim=0)
-        #print("Flexible Sigma dim {}".format(dim))
-        #lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
+        # sig_flex = torch.ones(lr[0].detach().shape) * torch.sqrt(sigma / dim)
+        # features = torch.cat((lr[0].detach(), sig_flex), dim=1)
+        # features = features.unsqueeze(dim=0)
+        # print("Flexible Sigma dim {}".format(dim))
+        # lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
     else:
-        print("Flexible Sigma dim {}".format(dim))
-        lr = GraphNeuralNet(adj=adj, dim=dim, fixed=False, features=features)
+
+        lr = GraphNeuralNet(adj=adj, dim=dim, fixed=True, features=features, agg=agg)
 
     return lr

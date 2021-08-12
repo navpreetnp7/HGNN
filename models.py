@@ -4,15 +4,15 @@ from layers import GraphConvolution, InnerProduct
 from utils import norm_embed
 import torch
 
-
 class GNN(nn.Module):
 
-    def __init__(self, batch_size, nfeat, nhid, ndim, mu0, sigma0, fixed):
+    def __init__(self, batch_size, nfeat, nhid, ndim, fixed, agg):
         super(GNN, self).__init__()
 
-        self.gc1 = GraphConvolution(batch_size, nfeat, nhid)
+        self.agg = agg
+        self.gc1 = GraphConvolution(batch_size, nfeat, nhid, agg)
         self.fixed = fixed
-        self.embeddings = GraphConvolution(batch_size, nhid, ndim)
+        self.embeddings = GraphConvolution(batch_size, nhid, ndim, agg)
         self.reconstructions = InnerProduct(ndim)
 
     def forward(self, x, adj):

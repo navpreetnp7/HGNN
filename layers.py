@@ -5,7 +5,6 @@ from torch.nn.modules.module import Module
 
 
 class GraphConvolution(Module):
-
     """
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
@@ -26,11 +25,10 @@ class GraphConvolution(Module):
             self.weight3 = Parameter(torch.zeros(batch_size, in_features, in_features))
             self.weight4 = Parameter(torch.zeros(batch_size, in_features, in_features))
 
-
     def forward(self, input, adj):
         if self.agg:
-            features,aggfeatures = torch.chunk(input,chunks=2,dim=2)
-            support1 = self.weight1 + torch.bmm(self.weight2,adj)
+            features, aggfeatures = torch.chunk(input, chunks=2, dim=2)
+            support1 = self.weight1 + torch.bmm(self.weight2, adj)
             output1 = torch.bmm(support1, features)
             support2 = self.weight3 + torch.bmm(self.weight4, adj)
             output2 = torch.bmm(support2, aggfeatures)
@@ -45,6 +43,7 @@ class GraphConvolution(Module):
                + str(self.in_features) + ' -> ' \
                + str(self.out_features) + ')'
 
+
 class InnerProduct(Module):
 
     def __init__(self, in_dim):
@@ -52,10 +51,9 @@ class InnerProduct(Module):
         self.in_dim = in_dim
 
     def forward(self, input):
-
-        x,y = torch.chunk(input,chunks=2,dim=2)
-        y = y.permute(0,2,1)
-        xy = torch.bmm(x,y)
+        x, y = torch.chunk(input, chunks=2, dim=2)
+        y = y.permute(0, 2, 1)
+        xy = torch.bmm(x, y)
         xy = torch.flatten(xy)
         return xy
 
