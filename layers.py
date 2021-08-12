@@ -10,41 +10,35 @@ class GraphConvolution(Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, batch_size, in_features, out_features, mu0, sigma0, scale):
+    def __init__(self, batch_size, in_features, out_features, agg):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.batch_size = batch_size
-        self.mu0 = mu0
-        self.sigma0 = sigma0
-        self.scale = scale
-        """if self.scale:
-            self.weight = Parameter(torch.ones(batch_size, in_features, out_features))
-        else:
-            self.weight = Parameter(torch.FloatTensor(batch_size, in_features, out_features))"""
+        self.agg = agg
 
         weight1_eye = torch.FloatTensor(torch.eye(in_features))
         weight1_eye = weight1_eye.reshape((1, in_features, in_features))
         weight1_eye = weight1_eye.repeat(batch_size, 1, 1)
         self.weight1 = Parameter(weight1_eye)
         self.weight2 = Parameter(torch.zeros(batch_size, in_features, in_features))
+        if self.agg:
+            self.weight3 = Parameter(torch.zeros(batch_size, in_features, in_features))
+            self.weight4 = Parameter(torch.zeros(batch_size, in_features, in_features))
 
-        #self.reset_parameters()
-
-    def reset_parameters(self):
-
-        if self.scale:
-            lr1,lr2 = torch.chunk(self.weight,chunks=2,dim=2)
-            with torch.no_grad():
-                lr1.mul_(self.mu0**0.5)
-                lr2.mul_(self.sigma0**0.5)
-        else:
-            torch.nn.init.xavier_uniform_(self.weight, gain=1.0)
 
     def forward(self, input, adj):
-        support = self.weight1 + torch.bmm(self.weight2,adj)
-        output = torch.bmm(support, input)
-        return output
+        if self.agg:
+            features,aggfeatures = torch.chunk(input,chunks=2,dim=2)
+            support1 = self.weight1 + torch.bmm(self.weight2,adj)
+            output1 = torch.bmm(support1, features)
+            support2 = self.weight3 + torch.bmm(self.weight4, adj)
+            output2 = torch.bmm(support2, aggfeatures)
+            return output1 + output2
+        else:
+            support = self.weight1 + torch.bmm(self.weight2, adj)
+            output = torch.bmm(support, input)
+            return output
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' \

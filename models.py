@@ -10,9 +10,9 @@ class GNN(nn.Module):
     def __init__(self, batch_size, nfeat, nhid, ndim, mu0, sigma0, fixed):
         super(GNN, self).__init__()
 
-        self.gc1 = GraphConvolution(batch_size, nfeat, nhid, mu0, sigma0, scale=False)
+        self.gc1 = GraphConvolution(batch_size, nfeat, nhid)
         self.fixed = fixed
-        self.embeddings = GraphConvolution(batch_size, nhid, ndim, mu0, sigma0, scale=True)
+        self.embeddings = GraphConvolution(batch_size, nhid, ndim)
         self.reconstructions = InnerProduct(ndim)
 
     def forward(self, x, adj):

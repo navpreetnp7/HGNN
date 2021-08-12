@@ -30,7 +30,7 @@ parser.add_argument('--ndim', type=int, default=2,
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-def GraphNeuralNet(adj,dim,fixed,features):
+def GraphNeuralNet(adj,dim,fixed,features,agg=False):
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -57,9 +57,7 @@ def GraphNeuralNet(adj,dim,fixed,features):
                 nfeat=features.shape[1],
                 nhid=adj.shape[1],
                 ndim=features.shape[2],
-                mu0=adj.mean(),
-                sigma0=adj.std(),
-                fixed=fixed)
+                agg=agg)
 
     if args.cuda:
         model.cuda()
