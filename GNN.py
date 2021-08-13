@@ -81,14 +81,20 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
         optimizer.zero_grad()
 
         if fixed:
-            mu,lr = model(features, adj_norm)
+            if agg:
+                mu,lr,agglr = model(features, adj_norm)
+            else:
+                mu,lr = model(features, adj_norm)
             with torch.no_grad():
                 mse = torch.nn.MSELoss()
                 mseloss = mse(torch.flatten(mu), torch.flatten(adj))
                 sig = torch.sqrt(mseloss)
             sigma = sig * torch.ones(adj.shape, requires_grad=True)
         else:
-            mu, sigma,lr = model(features, adj_norm)
+            if agg:
+                mu, sigma, lr,agglr = model(features, adj_norm)
+            else:
+                mu, sigma,lr = model(features, adj_norm)
 
         loss = criterion(torch.flatten(adj), torch.flatten(mu), torch.flatten(torch.square(sigma)))
         loss.backward()
@@ -100,12 +106,16 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
             best_lr = lr
             if fixed:
                 best_sig = sig
+            if agg:
+                best_agglr = agglr
         else:
             if loss < best_loss:
                 best_loss = loss
                 best_lr = lr
                 if fixed:
                     best_sig = sig
+                if agg:
+                    best_agglr = agglr
 
         if epoch % 5000 == 0:
             print('Epoch: {:04d}'.format(epoch + 1),
@@ -116,6 +126,12 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
     if fixed:
-        return best_lr, best_sig
+        if agg:
+            return best_lr, best_sig, best_agglr
+        else:
+            return best_lr, best_sig
     else:
-        return best_lr
+        if agg:
+            return best_lr, best_agglr
+        else:
+            return best_lr

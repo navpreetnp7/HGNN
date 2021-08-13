@@ -16,12 +16,21 @@ class GNN(nn.Module):
         self.reconstructions = InnerProduct(ndim)
 
     def forward(self, x, adj):
-        x = self.gc1(x, adj)
+        if self.agg:
+            x,lr,agglr = self.gc1(x, adj)
+        else:
+            x = self.gc1(x, adj)
         if self.fixed:
             mu = F.relu(self.reconstructions(x))
-            return mu, x
+            if self.agg:
+                return mu,lr,agglr
+            else:
+                return mu, x
         else:
             lr1, lr2 = torch.chunk(x, chunks=2, dim=2)
             mu = F.relu(self.reconstructions(lr1))
             sigma = F.relu(self.reconstructions(lr2))
-            return mu, sigma, x
+            if self.agg:
+                return mu, sigma, lr, agglr
+            else:
+                return mu, sigma, x

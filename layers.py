@@ -32,7 +32,7 @@ class GraphConvolution(Module):
             output1 = torch.bmm(support1, features)
             support2 = self.weight3 + torch.bmm(self.weight4, adj)
             output2 = torch.bmm(support2, aggfeatures)
-            return output1 + output2
+            return output1 + output2,output1,output2
         else:
             support = self.weight1 + torch.bmm(self.weight2, adj)
             output = torch.bmm(support, input)
