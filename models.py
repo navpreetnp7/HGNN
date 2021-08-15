@@ -33,4 +33,3 @@ class GNN(nn.Module):
                 return mu, sigma, x, agglr
             else:
                 return mu, sigma, x
-
