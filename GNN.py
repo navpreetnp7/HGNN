@@ -56,8 +56,7 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
 
     model = GNN(batch_size=adj.shape[0],
                 nfeat=features.shape[1],
-                nhid=adj.shape[1],
-                ndim=features.shape[2],
+                ndim=dim,
                 fixed=fixed,
                 agg=agg)
 
@@ -104,6 +103,7 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
         if epoch == 0:
             best_loss = loss
             best_lr = lr
+            best_mu = mu
             if fixed:
                 best_sig = sig
             if agg:
@@ -112,6 +112,7 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
             if loss < best_loss:
                 best_loss = loss
                 best_lr = lr
+                best_mu = mu
                 if fixed:
                     best_sig = sig
                 if agg:
@@ -127,11 +128,11 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
 
     if fixed:
         if agg:
-            return best_lr, best_sig, best_agglr
+            return best_lr, best_sig, best_agglr, best_mu, best_loss
         else:
-            return best_lr, best_sig
+            return best_lr, best_sig, best_mu, best_loss
     else:
         if agg:
-            return best_lr, best_agglr
+            return best_lr, best_agglr, best_mu, best_loss
         else:
-            return best_lr
+            return best_lr, best_mu, best_loss
