@@ -15,7 +15,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
 parser.add_argument('--fastmode', action='store_true', default=False,
                     help='Validate during training pass.')
-parser.add_argument('--seed', type=int, default=426, help='Random seed.')
+parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=20001,
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.00001,
@@ -27,11 +27,10 @@ parser.add_argument('--hidden', type=int, default=16,
 parser.add_argument('--ndim', type=int, default=2,
                     help='Embeddings dimension.')
 
-args = parser.parse_args()
+args = parser.parse_args(args=[])
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-
-def GraphNeuralNet(adj,dim,fixed,features,agg):
+def GraphNeuralNet(adj,dim,hidden,fixed,features,C):
 
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -56,9 +55,9 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
 
     model = GNN(batch_size=adj.shape[0],
                 nfeat=features.shape[1],
+                hidden=hidden,
                 ndim=dim,
-                fixed=fixed,
-                agg=agg)
+                fixed=fixed)
 
     if args.cuda:
         model.cuda()
@@ -80,20 +79,14 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
         optimizer.zero_grad()
 
         if fixed:
-            if agg:
-                mu,lr,agglr = model(features, adj_norm)
-            else:
-                mu,lr = model(features, adj_norm)
+            mu,lr = model(features, adj_norm, C)
             with torch.no_grad():
                 mse = torch.nn.MSELoss()
                 mseloss = mse(torch.flatten(mu), torch.flatten(adj))
                 sig = torch.sqrt(mseloss)
             sigma = sig * torch.ones(adj.shape, requires_grad=True)
         else:
-            if agg:
-                mu, sigma, lr,agglr = model(features, adj_norm)
-            else:
-                mu, sigma,lr = model(features, adj_norm)
+            mu, sigma,lr = model(features, adj_norm, C)
 
         loss = criterion(torch.flatten(adj), torch.flatten(mu), torch.flatten(torch.square(sigma)))
         loss.backward()
@@ -106,8 +99,6 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
             best_mu = mu
             if fixed:
                 best_sig = sig
-            if agg:
-                best_agglr = agglr
         else:
             if loss < best_loss:
                 best_loss = loss
@@ -115,8 +106,6 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
                 best_mu = mu
                 if fixed:
                     best_sig = sig
-                if agg:
-                    best_agglr = agglr
 
         if epoch % 5000 == 0:
             print('Epoch: {:04d}'.format(epoch + 1),
@@ -127,12 +116,6 @@ def GraphNeuralNet(adj,dim,fixed,features,agg):
     print("Total time elapsed: {:.4f}s".format(time.time() - t_total))
 
     if fixed:
-        if agg:
-            return best_lr, best_sig, best_agglr, best_mu, best_loss
-        else:
-            return best_lr, best_sig, best_mu, best_loss
+        return best_lr, best_sig, best_mu, best_loss
     else:
-        if agg:
-            return best_lr, best_agglr, best_mu, best_loss
-        else:
-            return best_lr, best_mu, best_loss
+        return best_lr, best_mu, best_loss
