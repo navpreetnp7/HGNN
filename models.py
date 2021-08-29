@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from layers import GraphNN1, GraphNN1_h, GraphNN2, InnerProduct
+from utils import doublerelu
 
 import torch
 
@@ -25,12 +26,14 @@ class GNN(nn.Module):
         self.reconstructions = InnerProduct(self.ndim)
 
     def forward(self, x, adj, C):
-
-        x1 = self.x1(x, adj)
-        h1 = self.h1(x, C)
-        C_t = torch.transpose(C, 0, 1)
+        x = torch.sigmoid(x)
+        x1 = doublerelu(self.x1(x, adj))
+        C_t = torch.transpose(C, 1, 2)
+        h1 = doublerelu(self.h1(x, C_t))
         C_t = C_t / C_t.sum(axis=1).unsqueeze(1)
-        x2 = self.h1(x1, adj, h1, C_t)
+        C_t = torch.transpose(C_t, 1, 2)
+        x2 = doublerelu(self.x2(x1, adj, h1, C_t))
+        x2 = torch.logit(x2)
 
         if self.fixed:
             mu = F.relu(self.reconstructions(x2))

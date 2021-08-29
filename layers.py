@@ -22,8 +22,6 @@ class GraphNN1(Module):
 
 
     def forward(self, input, adj):
-        print(input.shape)
-        print(self.weight0.shape)
         v1 = torch.bmm(input, self.weight0)
         v2 = torch.bmm(torch.bmm(adj, input),self.weight1)
         output = v1 + v2
@@ -75,6 +73,7 @@ class GraphNN2(Module):
 
 
     def forward(self, input, adj, h1, C_t):
+
         v1 = torch.bmm(input, self.weight3)
         v2 = torch.bmm(torch.bmm(adj, input),self.weight4)
         v3 = torch.bmm(torch.bmm(C_t, h1),self.weight5)
